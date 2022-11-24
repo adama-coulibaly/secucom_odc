@@ -90,7 +90,7 @@ public class WebSecurityConfig { // extends WebSecurityConfigurerAdapter {
         .anyRequest().authenticated();
     http.formLogin();
     http.oauth2Login();
-    http.authenticationProvider(authenticationProvider());
+  //  http.authenticationProvider(authenticationProvider());
 
     http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     

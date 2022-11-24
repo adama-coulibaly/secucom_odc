@@ -1,7 +1,9 @@
 package com.bezkoder.springjwt.controllers;
 
+import java.security.Principal;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,6 +16,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,6 +46,9 @@ public class AuthController {
   AuthenticationManager authenticationManager;
 
   @Autowired
+  private OAuth2AuthorizedClientService authorizedClientService;
+
+  @Autowired
   UserRepository userRepository;
 
   @Autowired
@@ -52,24 +61,31 @@ public class AuthController {
   JwtUtils jwtUtils;
 
   @PostMapping("/signin")
-  public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+  public String authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
     Authentication authentication = authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
     SecurityContextHolder.getContext().setAuthentication(authentication);
     String jwt = jwtUtils.generateJwtToken(authentication);
-    
-    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();    
+
+    UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
     List<String> roles = userDetails.getAuthorities().stream()
         .map(item -> item.getAuthority())
         .collect(Collectors.toList());
 
-    return ResponseEntity.ok(new JwtResponse(jwt, 
-                         userDetails.getId(), 
-                         userDetails.getUsername(), 
-                         userDetails.getEmail(), 
+    System.out.println(userDetails.getId());
+    System.out.println(userDetails.getUsername());
+    System.out.println(userDetails.getEmail());
+
+    return "Connection reussie. \n "+"Nom utilisateur: "+userDetails.getUsername()+"\n Email: "+userDetails.getEmail()+"\n Token: "+jwt;
+           /* ResponseEntity.ok(new JwtResponse(jwt,
+                         userDetails.getId(),
+                         userDetails.getUsername(),
+                         userDetails.getEmail(),
                          roles));
+
+            */
 
 
   }
@@ -89,7 +105,7 @@ public class AuthController {
     }
 
     // Create new user's account
-    User user = new User(signUpRequest.getUsername(), 
+    User user = new User(signUpRequest.getUsername(),
                signUpRequest.getEmail(),
                encoder.encode(signUpRequest.getPassword()));
 
@@ -127,5 +143,29 @@ public class AuthController {
     userRepository.save(user);
 
     return ResponseEntity.ok(new MessageResponse("Collaborateur ajouter avec succes!"));
+  }
+
+
+  @RequestMapping("/**")
+  private StringBuffer getOauth2LoginInfo(Principal user){
+
+    StringBuffer protectedInfo = new StringBuffer();
+
+    OAuth2AuthenticationToken authToken = ((OAuth2AuthenticationToken) user);
+     OAuth2AuthorizedClient authClient =
+         this.authorizedClientService.loadAuthorizedClient(authToken.getAuthorizedClientRegistrationId(), authToken.getName());
+    if(authToken.isAuthenticated()){
+
+      Map<String,Object> userAttributes = ((DefaultOAuth2User) authToken.getPrincipal()).getAttributes();
+
+      String userToken = authClient.getAccessToken().getTokenValue();
+      protectedInfo.append("Bienvenue, " + userAttributes.get("name")+"<br><br>");
+      protectedInfo.append("e-mail: " + userAttributes.get("email")+"<br><br>");
+      protectedInfo.append("Access Token: " + userToken+"<br><br>");
+    }
+    else{
+      protectedInfo.append("NA");
+    }
+    return protectedInfo;
   }
 }
