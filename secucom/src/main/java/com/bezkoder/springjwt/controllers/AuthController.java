@@ -60,6 +60,8 @@ public class AuthController {
   @Autowired
   JwtUtils jwtUtils;
 
+
+
   @PostMapping("/signin")
   public String authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -67,7 +69,7 @@ public class AuthController {
         new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
     SecurityContextHolder.getContext().setAuthentication(authentication);
-    String jwt = jwtUtils.generateJwtToken(authentication);
+   // String jwt = jwtUtils.generateJwtToken(authentication);
 
     UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
     List<String> roles = userDetails.getAuthorities().stream()
@@ -78,7 +80,7 @@ public class AuthController {
     System.out.println(userDetails.getUsername());
     System.out.println(userDetails.getEmail());
 
-    return "Connection reussie. \n "+"Nom utilisateur: "+userDetails.getUsername()+"\n Email: "+userDetails.getEmail()+"\n Token: "+jwt;
+    return "Connection reussie. \n "+"Nom utilisateur: "+userDetails.getUsername()+"\n Email: "+userDetails.getEmail()+"\n Token: ";
            /* ResponseEntity.ok(new JwtResponse(jwt,
                          userDetails.getId(),
                          userDetails.getUsername(),
@@ -151,6 +153,8 @@ public class AuthController {
 
     StringBuffer protectedInfo = new StringBuffer();
 
+
+
     OAuth2AuthenticationToken authToken = ((OAuth2AuthenticationToken) user);
      OAuth2AuthorizedClient authClient =
          this.authorizedClientService.loadAuthorizedClient(authToken.getAuthorizedClientRegistrationId(), authToken.getName());
@@ -166,6 +170,9 @@ public class AuthController {
     else{
       protectedInfo.append("NA");
     }
-    return protectedInfo;
-  }
+    return protectedInfo;  }
+
+
+
+
 }
