@@ -86,11 +86,12 @@ public class WebSecurityConfig { // extends WebSecurityConfigurerAdapter {
     http.cors().and().csrf().disable()
 
         .authorizeRequests().antMatchers("/**").permitAll()
+            .antMatchers("/signin/**").permitAll()
         .antMatchers("/test/**").permitAll()
         .anyRequest().authenticated();
     http.formLogin();
     http.oauth2Login();
-  //  http.authenticationProvider(authenticationProvider());
+    http.authenticationProvider(authenticationProvider());
 
     http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     
